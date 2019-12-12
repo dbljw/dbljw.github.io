@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Welcome to Jekyll!"
+title:  "Linux C语言编程基本原理与实践 驴蛋蛋看这个"
 date:   2019-12-12  22:22:30 +0800
 categories: jekyll update
 ---
@@ -39,4 +39,4 @@ int main(int argc, char* argv[])
 
 
 
-顺便说句：你个臭卤蛋，哼！！！！
+顺便说句：你个臭卤蛋，哼，鄙视你！！！！
