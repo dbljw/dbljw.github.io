@@ -1,0 +1,77 @@
+---
+layout: post
+title:  "Ubuntu系统的软件安装"
+date:   2020-1-6  09:52:22 +0800
+categories: jekyll update
+---
+## Ruby
+
+```
+sudo apt install ruby-full ruby-bundler
+```
+
+
+
+## Ruby的Gem换源
+
+```
+gem sources -l #查看源
+gem sources --remove url  #删除原来的源 url为原来的源的地址
+gem sources -a https://gems.ruby-china.com #添加新的源 目前使用该源
+```
+
+
+
+## SASS
+
+```
+安装的两种方法
+1.sudo apt-get install ruby ruby-sass
+2.sudo gem install sass
+```
+
+
+
+## TREE
+
+```
+安装
+sudo apt-get install tree
+
+使用帮助
+tree --help
+```
+
+
+
+## 博客（简单版）
+
+```
+安装jekyll
+sudo gem install jekyll
+```
+
+```
+创建jekyll
+jekyll new new-site #new-sity是要新创建的文件夹名字
+cd new-site			#选择new-site文件夹
+jekyll serve		#启动该项目
+
+127.0.0.1:4000		#可查看自己的博客
+```
+
+
+
+## GIT
+
+https://gitee.com/btchc/GIT_Document    #git学习可以参考
+
+```
+git init  #初始化Git仓库
+
+后期上传博客文章的三个步骤
+git add * #添加所有文件 【也可以指定文件】
+git commit -m “这里随便写点注释” #将添加的文件提交
+git push #将提交的文件上传到github
+```
+
