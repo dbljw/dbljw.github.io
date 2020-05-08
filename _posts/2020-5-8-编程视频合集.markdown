@@ -1,0 +1,58 @@
+---
+layout: post
+title:  "各类学习视频网址"
+date:   2020-5-8  11:52:22 +0800
+categories: jekyll update
+---
+
+## PHP
+
+```
+http://video.itnova.top/video/php01-7328
+http://video.itnova.top/video/php02-7d38
+http://video.itnova.top/video/php03-6528
+http://video.itnova.top/video/php04-795rt
+http://video.itnova.top/video/php05-a3b8
+http://video.itnova.top/video/php06-746g8
+
+http://video.itnova.top/video/php-basic-project1-9867
+http://video.itnova.top/video/php-basic-project2-2321
+http://video.itnova.top/video/php-basic-project3-9741
+http://video.itnova.top/video/php-basic-project4-7542
+http://video.itnova.top/video/php-basic-project5-5658
+http://video.itnova.top/video/php-basic-project6-9112
+```
+
+## 框架
+
+```
+http://video.itnova.top/video/php-framework1-2234
+http://video.itnova.top/video/php-framework2-6654
+http://video.itnova.top/video/php-framework3-9963
+http://video.itnova.top/video/php-framework4-8857
+http://video.itnova.top/video/php-framework5-9874
+```
+
+
+
+## Docker
+
+```
+http://video.itnova.top/video/mp4-docker-01-9832
+http://video.itnova.top/video/mp4-docker-02-5336
+http://video.itnova.top/video/mp4-docker-03-4442
+http://video.itnova.top/video/mp4-docker-04-1425
+http://video.itnova.top/video/mp4-docker-05-7753
+http://video.itnova.top/video/mp4-docker-06-5238
+http://video.itnova.top/video/mp4-docker-07-0945
+http://video.itnova.top/video/mp4-docker-08-2434
+```
+
+
+
+## Redis
+
+```
+链接: https://pan.baidu.com/s/1-Bxvc9xkBlJiL8m6kKbq9w  密码: i9l5
+链接: https://pan.baidu.com/s/1pzoCWE7fsj0C4cSjBg0rrA  密码: fnqf
+```
