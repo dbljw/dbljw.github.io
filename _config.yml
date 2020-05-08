@@ -180,7 +180,7 @@ sidebar:
     enable: true
     img: //gravatar.loli.net/avatar/a12c5fff23dde00df79af9aca4e7b6e4?d=wavatar&s=600 # 头像的地址
     info: <br/>计算机应用技术<br/>全栈<br/> # 头像背后的信息
-  description: '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=100% height=52 src="https://music.163.com/outchain/player?type=0&id=5000103923&auto=0&height=32"></iframe>'
+  description: '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=100% height=52 src="https://music.163.com/outchain/player?type=0&id=5000103923&auto=1&height=32"></iframe>'
 
   social:
   - title: 949498442@qq.com # email
