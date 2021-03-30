@@ -1,0 +1,463 @@
+---
+layout: post
+title:  "笔记"
+date:   2021-3-29  11:52:22 +0800
+categories: jekyll update
+---
+
+## 短信验证
+
+### 后端
+
+- api文件
+
+  ```
+  public function 函数名(Request $request){
+      $code = rand(100000,999999);
+      $phone = $request->param('phone');//获得前端传递的手机号码
+      $result = send_sms($phone,$code);//调用common.php中的send_sms()函数
+      $result['phone_code']=$code;
+      return json_encode($result);
+  }
+  ```
+
+- common.php文件
+
+  注意点：alisms文件夹放在extend下
+
+  ```
+  use Aliyun\Core\Config;
+  use Aliyun\Core\Profile\DefaultProfile;
+  use Aliyun\Core\DefaultAcsClient;
+  use Aliyun\Api\Sms\Request\V20170525\SendSmsRequest;
+  //以上部分要加进去
+  
+  function send_sms($phone, $code){
+      require_once '../extend/alisms/vendor/autoload.php';
+      Config::load(); //加载区域结点配置
+      $accessKeyId = '自己阿里云的key';															//这里填key
+      $accessKeySecret = '自己阿里云的秘钥';												//这里填秘钥
+      $templateParam = $code;
+      //短信API产品名（短信产品名固定，无需修改）
+      $product = "Dysmsapi";
+      //短信API产品域名（接口地址固定，无需修改）
+      $domain = "dysmsapi.aliyuncs.com";
+      //暂时不支持多Region（目前仅支持cn-hangzhou请勿修改）
+      $region = "cn-hangzhou";
+      // 初始化用户Profile实例
+      $profile = DefaultProfile::getProfile($region, $accessKeyId, $accessKeySecret);
+      // 增加服务结点
+      DefaultProfile::addEndpoint("cn-hangzhou", "cn-hangzhou", $product, $domain);
+      // 初始化AcsClient用于发起请求
+      $acsClient= new DefaultAcsClient($profile);
+      // 初始化SendSmsRequest实例用于设置发送短信的参数
+      $request = new SendSmsRequest();
+      // 必填，设置雉短信接收号码
+      $request->setPhoneNumbers($phone);
+      // 必填，设置签名名称
+      $request->setSignName("需要使用的签名名称");													//这里填签名名称
+      // 必填，设置模板CODE
+      $request->setTemplateCode("需要使用的模版code");										//这里填模板code
+      // 可选，设置模板参数
+      if($templateParam) {
+          $request->setTemplateParam(json_encode(['code'=>$templateParam]));//由于我的模板里需要传递我的短信验证码
+      }
+      //发起访问请求
+      $acsResponse = $acsClient->getAcsResponse($request);
+      //返回请求结果
+      $result = json_decode(json_encode($acsResponse),true);
+      // 具体返回值参考文档：https://help.aliyun.com/document_detail/55451.html?spm=a2c4g.11186623.6.563.YSe8FK
+      return $result;
+  }
+  ```
+
+  
+
+### 前端
+
+- 这还要写？自己调用api接口，自己进行逻辑处理
+
+
+
+## 微信支付和提现
+
+注意点：**下载微信支付的安全证书，放在public/cert中**
+
+### 后端common.php文件
+
+```
+/**
+ * 生成唯一订单号
+ * @return mixed
+ */
+function getOrderId(){
+    return uniqid(date('YmdHis'));
+}
+```
+
+```
+/**
+ * 生成签名
+ * @param $data
+ * @return mixed
+ */
+function get_sign($data)
+{
+    ksort($data);//排序
+    //使用URL键值对的格式（即key1=value1&key2=value2…）拼接成字符串
+    $str='';
+    foreach($data as $k=>$v) {
+        $str.=$k.'='.$v.'&';
+    }
+    //拼接API密钥
+    $str .='key=xxxx';    //这里的xxxx是你商户后台设置的秘钥
+    $data['sign'] = md5($str);//加密
+    return $data;
+}
+```
+
+```
+
+/**
+ * xml转数组
+ * @param $xml
+ * @return mixed
+ */
+function xml_to_array($xml) {
+    //禁止引用外部xml实体
+    libxml_disable_entity_loader(true);
+    $xmlstring = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
+    $val = json_decode(json_encode($xmlstring),true);
+    return $val;
+}
+```
+
+```
+/**
+ * 数组转xml
+ * @param $data
+ * @return string
+ */
+function array_to_xml($data){
+    $str='<xml>';
+    foreach($data as $k=>$v) {
+        $str .= '<'.$k.'>'.$v.'</'.$k.'>';
+    }
+    $str.='</xml>';
+    return $str;
+}
+```
+
+```
+/**
+ * @param string $url      微信提现接口
+ * @param string $vars     xml格式的参数
+ * @param int $second   最大执行时间
+ * @param array $aHeader    标题
+ * @return bool|mixed
+ */
+function curl_post_ssl($url, $vars, $second = 30, $aHeader = [])
+{
+    $isdir = ROOT_PATH.'public/cert/'; //证书位置
+    $ch = curl_init();//初始化curl
+    curl_setopt($ch, CURLOPT_TIMEOUT, $second);//设置执行最长秒数
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);//要求结果为字符串且输出到屏幕上
+    curl_setopt($ch, CURLOPT_URL, $url);//抓取指定网页
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);// 终止从服务端进行验证
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);//
+    curl_setopt($ch, CURLOPT_SSLCERTTYPE, 'PEM');//证书类型
+    curl_setopt($ch, CURLOPT_SSLCERT, $isdir . 'apiclient_cert.pem');//证书位置
+    curl_setopt($ch, CURLOPT_SSLKEYTYPE, 'PEM');//CURLOPT_SSLKEY中规定的私钥的加密类型
+    curl_setopt($ch, CURLOPT_SSLKEY, $isdir . 'apiclient_key.pem');//证书位置
+    curl_setopt($ch, CURLOPT_CAINFO, 'PEM');
+    curl_setopt($ch, CURLOPT_CAINFO, $isdir . 'rootca.pem');
+    if (count($aHeader) >= 1) {
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $aHeader);//设置头部
+    }
+    curl_setopt($ch, CURLOPT_POST, 1);//post提交方式
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $vars);//全部数据使用HTTP协议中的"POST"操作来发送
+    $data = curl_exec($ch);//执行回话
+    if ($data) {
+        curl_close($ch);
+        return $data;
+    } else {
+        $error = curl_errno($ch);
+        echo "call faild, errorCode:$error\n";
+        curl_close($ch);
+        return false;
+    }
+}
+```
+
+
+
+### 支付
+
+#### 后端
+
+- api文件
+
+```
+public function pay(Request $request)
+{
+	$fee = $request->param('fee');//前端传递过来的金额
+	$openid = $request->param('openid');//前端传递过来的用户openid
+	$orderId = $request->param('orderId');//前端传递过来的用户的订单号
+
+	$parameters = [
+		'appid'           => '小程序ID',//小程序ID
+		'body'            => '商品描述',//商品描述
+		'mch_id'          => '商户号',//商户号
+		'nonce_str'       => md5(time()),//随机字符串
+		'notify_url'      => 'https://testapi.youdui.vip/index/Index/notify',//通知地址，notify方法的访问地址
+		'openid'          => $openid,
+		'out_trade_no'     => $orderId,//商户订单号
+		'spbill_create_ip' => $_SERVER['REMOTE_ADDR'],//终端IP
+		'total_fee'        => $fee*100,//总金额 单位 分
+		'trade_type'       => 'JSAPI'//交易类型
+	];
+	//统一下单接口
+	$result = xml_to_array(curl_post_ssl('https://api.mch.weixin.qq.com/pay/unifiedorder', array_to_xml(get_sign($parameters)), 30)) ;
+	
+	//返回微信吊起支付APi数据
+	if ( isset($result['prepay_id']) ){
+		return json([
+            'code' => 0,
+            'data'        => get_sign([
+                'appId'     => $parameters['appid'],
+                'timeStamp' => time(),
+                'nonceStr'  => $parameters['nonce_str'],
+                'package'   => 'prepay_id='.$result['prepay_id'],
+                'signType'  => 'MD5'
+			])
+		]);
+	} else {
+		return json(['code' =>9999, 'msg' => $result['return_msg']]);
+	}
+}
+
+public function notify(){
+    //@todo  更改订单状态的逻辑，最终返回success
+    echo 'success';
+}
+```
+
+#### 前端
+
+```
+//执行函数
+getPayPrames(){
+	return new Promise(resove=>{
+		var fee =      //金额
+        var openid =   //用户的openid
+        var orderId =  //订单号
+        wx.request({
+            url:'你的请求地址',											//这里填要调用的api地址
+            header: { 'token': ''},
+            method: 'POST',
+            data: {
+                fee:fee,
+                openid:openid,
+                orderId:orderId
+			},
+			success(response){
+                let res = response.data
+                if(res.code===0){
+                	resove(res.data)
+                }else{
+					//console.log('res.code')
+                    resove(res)
+				}
+			},
+			fail(err){
+				console.log('请求支付出错')
+				console.log(err);
+			}
+		});
+	})
+
+},
+```
+
+```
+//调起微信支付
+requestpay(data){
+	return new Promise((resolve,reject) => {
+		wx.requestPayment({
+			timeStamp: data.timeStamp.toString(),
+			nonceStr:  data.nonceStr,
+			package:   data.package,
+			signType: 'MD5',
+			paySign:   data.sign,
+			success:function (res) {
+				resolve(res);
+			},
+			fail:function (res) {
+				reject(res);
+			}
+		})
+	})
+},
+```
+
+```
+//这是wxml里点击调用的函数
+pay(){
+	// console.log('这里调用支付逻辑')
+	this.getPayPrames().then(data=>{
+		if(data){
+			//console.log('参数请求成功')
+			//console.log(data)
+			this.requestpay(data).then(res=>{
+				//console.log('支付成功')
+                wx.showToast({
+                    title: '支付成功',
+                    icon: 'success',
+                    duration: 2000
+                })
+                
+				//这里写成功后要执行的逻辑
+				
+			}).catch(error=>{
+				console.log('支付失败')
+				console.log(error);
+				wx.showToast({
+					title: '支付失败,请重新支付',
+                    icon: 'none',
+                    duration: 2000
+                })
+			})
+		}else{
+            console.log('get parmes err')
+            console.log(data)
+        }
+	})
+},
+```
+
+
+
+### 提现
+
+#### 后端
+
+- api文件
+
+  ```
+  function txFunc(Request $request)
+  {
+  	$fee = $request->param('fee');//前端传递过来的金额
+  	$openid = $request->param('openid');//前端传递过来的用户openid
+  	$orderId = $request->param('orderId');//前端传递过来的用户的订单号
+  	$data = array(
+      	'mch_appid' =>'小程序appid',//小程序appid
+  		'mchid' => '微信支付商户号',//微信支付商户号
+  		'nonce_str' => md5(time()), //随机字符串
+  		'partner_trade_no' => $orderId, //商户订单号，需要唯一
+  		'openid' => $openid,
+  		'check_name' => 'NO_CHECK', //OPTION_CHECK不强制校验真实姓名, FORCE_CHECK：强制 NO_CHECK：
+  		'amount' => $fee * 100, //付款金额单位为分
+  		'desc' => '描述',//描述
+  		'spbill_create_ip' => $_SERVER['REMOTE_ADDR'],//终端IP
+  		//'re_user_name' => 'jorsh', //收款人用户姓名 *选填
+  		//'device_info' => '1000',  //设备号 *选填
+  	);
+  
+  	//统一下单接口
+  	$result = xml_to_array(curl_post_ssl('https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers',array_to_xml(get_sign($data)), 30)) ;
+  	return json_encode($result);
+  }
+  ```
+
+  
+
+#### 前端
+
+```
+save:function(){
+    var that = this
+    var orderId = 订单号 //订单号
+    var cashMoneyVal = 提现金额 //提现金额
+
+    //当日提现次数不能超过十次
+    if(当日提现次数>10){
+        wx.showModal({
+            title: '友情提示',
+            content:'每天最多提现10次',
+            showCancel:false,
+            success: function(res) {
+                if (res.confirm) {
+                    console.log('用户点击确定')
+                }
+			}
+		})
+		return false
+	}
+
+	//提现金额为空
+	if(cashMoneyVal == ''){
+		wx.showModal({
+            title: '友情提示',
+            content:'请输入提现金额',
+            showCancel:false,
+            success: function(res) {
+				if (res.confirm) {
+					console.log('用户点击确定')
+				}
+			}
+		})
+		return false
+	}
+
+	if(cashMoneyVal<10 || cashMoneyVal > that.data.canCashMoney){
+		wx.showModal({
+			title: '友情提示',
+            content:'请检查输入金额是否小于最少提现金额10元或输入金额大于可提现金额',
+            showCancel:false,
+            success: function(res) {
+                if (res.confirm) {
+					console.log('用户点击确定')
+				}
+			}
+		})
+
+        return false
+	}
+
+	//单笔提现不能超过5000   ps：当日总共加起来也不能超过5000，这个判断没写，自己加
+	if(cashMoneyVal>5000){
+		wx.showModal({
+			title: '友情提示',
+            content:'单笔提现最高不能超过5000元',
+            showCancel:false,
+            success: function(res) {
+                if (res.confirm) {
+                	console.log('用户点击确定')
+                }
+            }
+		})
+		return false
+	}
+	
+	//上面都是自己写的提现限制逻辑
+
+	wx.request({
+        url: '你的请求地址',				//这里填你要调用的api地址
+        method:'POST',
+        data:{
+            fee:cashMoneyVal,//提现金额
+            openid:用户的openid,//用户的openid
+            orderId:orderId//订单号
+        },
+        success:function(res){
+            console.log(res)
+            //这里写提现成功后的逻辑
+        }
+    })
+
+
+}
+```
+
+
+
